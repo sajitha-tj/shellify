@@ -1,0 +1,16 @@
+# Python bytecode
+__pycache__/
+modules/__pycache__/
+
+# Environment variables
+.env
+
+# spotify cache
+.cache
+modules/.cache
+
+# VS Code
+.vscode/
+
+# Audio files
+*.mp3
