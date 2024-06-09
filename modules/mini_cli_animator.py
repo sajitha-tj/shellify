@@ -8,6 +8,7 @@ class Mini_cli_animator:
         self.current_frame = 0
         self.current_thread = None
         self.current_thread_bool = False
+        self.current_thread_bool_text = False
 
     def animate_random_eq_bars(self, length: int):
         bar_heights = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
@@ -37,4 +38,21 @@ class Mini_cli_animator:
         if self.current_thread:
             self.current_thread.join()
             self.current_thread = None
-        print ("\033[A                             \033[A")
+        print ("\033[A                                                          \033[A")
+
+    def animate_text_core(self, text: str, delay_time: float = 0.5):
+        # animate text
+        while self.current_thread_bool_text:
+            for i in range(len(text)):
+                print(text[:i] + text[i].upper() + text[i+1:] , end='\r')
+                time.sleep(delay_time)
+
+    def animate_text(self, text: str, delay_time: float = 0.5):
+        self.current_thread_bool_text = True
+        self.current_thread = threading.Thread(target=self.animate_text_core, args=(text, delay_time))
+        self.current_thread.start()
+        return self.current_thread
+
+if __name__ == '__main__':
+    anim = Mini_cli_animator()
+    anim.animate_text("Hello World", 0.1)

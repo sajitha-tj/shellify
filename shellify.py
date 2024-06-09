@@ -3,6 +3,7 @@ import sys
 from dotenv import load_dotenv
 import argparse
 import json
+import time
 from modules.sp_downloader import Sp_downloader
 from modules.mp3_player import Mp3Player
 from modules.mini_cli_animator import Mini_cli_animator
@@ -58,9 +59,15 @@ def list_all_playlists(spd: Sp_downloader):
         temp_playlist = spd.load_playlist_from_json(playlist_name)
         if len(temp_playlist) != 0:
             for idx in temp_playlist:
-                print(f"     ├──[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}")
+                print(f"     ├─[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}")
 
-
+def cli_display(mp3Player: Mp3Player):
+    # animation thread
+    anim = Mini_cli_animator()
+    anim.animate_on_own(0.3)
+    while mp3Player.is_playing:
+        time.sleep(1.2)
+    anim.stop()
 
 if __name__ == "__main__":
     banner = """
@@ -132,16 +139,18 @@ if __name__ == "__main__":
 
     if not is_no_play:
         print("[+] Starting mp3 player")
-        mp3Player = Mp3Player()
-        # mp3Player.play_playlist(my_playlist)
+        mp3Player = Mp3Player(verbose_mode=False)
         mp3Player.play_playlist(my_playlist)
         mp3Player.set_play_mode(play_mode)
+        # animation thread
+        threading.Thread(target=cli_display, args=(mp3Player,), daemon=True).start()
 
         print("\n[!] CLI Commands\n n : play next track\n p : play previous track\n q : quit\n")
         while True:
             cmd = input()
             if cmd == "q":
                 mp3Player.stop()
+                print("[+] Bye!")
                 break
             if cmd == "n":
                 mp3Player.play_next()

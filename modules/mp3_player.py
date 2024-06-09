@@ -1,5 +1,6 @@
 import os
 import multiprocessing
+import ctypes
 import time
 import json
 import random
@@ -21,15 +22,16 @@ import pygame
 class Mp3Player:
     def __init__(self, verbose_mode=True):
         self.current_playlist = None
-        self.current_track_index = 0
-        self.current_track_name = None
-        self.current_track_path = None
+        self.current_track_index = multiprocessing.Value('i', 0)
+        self.current_track_name = multiprocessing.Value(ctypes.c_wchar_p, "")
+        self.current_track_path = multiprocessing.Value(ctypes.c_wchar_p, "")
         self.current_status_player = multiprocessing.Value('b', False)
         self.current_status_playlist = multiprocessing.Value('b', False)
         # self.current_player_process = None
         self.current_playlist_process = None
         self.current_play_mode = multiprocessing.Value('i', 0) # 0: normal, 1: loop, 2: shuffle
         self.verbose_mode = multiprocessing.Value('b', verbose_mode)
+        self.is_playing = multiprocessing.Value('b', False)
     
     def core_track_play(self, track_path: str):
         '''
@@ -40,15 +42,17 @@ class Mp3Player:
         pygame.mixer.init() # Initialize pygame mixer
         pygame.mixer.music.load(track_path) # Load the mp3 file
         pygame.mixer.music.play() # Start playing the mp3 file
-        mini_anime = Mini_cli_animator()
-        mini_anime.animate_on_own(0.4)
+        self.is_playing.value = True
+        # mini_anime = Mini_cli_animator()
+        # mini_anime.animate_on_own(0.4)
         # Wait for the music to finish playing
         while pygame.mixer.music.get_busy():
             time.sleep(1)
             # mini_anime.animate()
-        mini_anime.stop()
+        # mini_anime.stop()
         pygame.mixer.music.stop()
         pygame.mixer.quit()
+        self.is_playing.value = False
         return
 
 
@@ -63,6 +67,7 @@ class Mp3Player:
                 # self.current_player_process.terminate()
                 self.current_status_player.value = False
                 if self.verbose_mode.value: print("[+] Stopped the player.")
+                self.is_playing.value = False
             except Exception as e:
                 if self.verbose_mode.value: print(f"[!] Error: {e}")
         else:
@@ -88,7 +93,7 @@ class Mp3Player:
         # if self.current_status_player.value:      #############
         #     self.current_player_process.terminate()    ########
         # Start playing the new track
-        if self.verbose_mode.value: print(f"[+] Playing: {self.current_track_name}...")
+        if self.verbose_mode.value: print(f"[+] Playing: {self.current_track_name.value}...")
         try:
             self.current_status_player.value = True
             # self.current_player_process = multiprocessing.Process(target=playsound.playsound, args=(path_to_track,), daemon=True)
@@ -113,8 +118,8 @@ class Mp3Player:
             return
         track_name = song['track_name']
         track_path = song['file_path']
-        self.current_track_name = track_name
-        self.current_track_path = track_path
+        self.current_track_name.value = track_name
+        self.current_track_path.value = track_path
         return self.play_path(track_path)
     
     def core_playlist_play(self):
@@ -123,11 +128,11 @@ class Mp3Player:
         arguments: None
         returns  : None
         '''
-        while self.current_track_index < len(self.current_playlist):
-            track = self.current_playlist[str(self.current_track_index)]
-            self.play(track)
+        while self.current_track_index.value < len(self.current_playlist):
+            song = self.current_playlist[str(self.current_track_index.value)]
+            self.play(song)
             # self.current_player_process.join()
-            self.current_track_index += 1
+            self.current_track_index.value += 1
             # Check for play mode
             # 0: normal
             # 1: loop
@@ -135,10 +140,10 @@ class Mp3Player:
             if self.current_play_mode.value == 0: # normal mode
                 pass
             elif self.current_play_mode.value == 1: # loop mode
-                if self.current_track_index >= len(self.current_playlist):
-                    self.current_track_index = 0
+                if self.current_track_index.value >= len(self.current_playlist):
+                    self.current_track_index.value = 0
             elif self.current_play_mode.value == 2: # shuffle mode
-                self.current_track_index = random.randint(0, len(self.current_playlist) - 1)
+                self.current_track_index.value = random.randint(0, len(self.current_playlist) - 1)
             else:
                 if self.verbose_mode.value: print("[!] Invalid play mode.")
                 break
@@ -174,12 +179,12 @@ class Mp3Player:
             if self.verbose_mode.value: print("[!] No playlist provided.")
             return
 
-        if self.current_track_index >= len(self.current_playlist):
+        if self.current_track_index.value >= len(self.current_playlist):
             if self.verbose_mode.value: print("[!] End of playlist. Restarting from the beginning.")
-            self.current_track_index = 0
+            self.current_track_index.value = 0
         else:
-            self.current_track_index += 1
-        if self.verbose_mode.value: print(f"[+] Playing next track: {self.current_playlist[str(self.current_track_index)]['track_name']}")
+            self.current_track_index.value += 1
+        if self.verbose_mode.value: print(f"[+] Playing next track: {self.current_playlist[str(self.current_track_index.value)]['track_name']}")
         self.play_configured_playlist_tracks()
     
     def play_previous(self):
@@ -192,12 +197,12 @@ class Mp3Player:
             if self.verbose_mode.value: print("[!] No playlist provided.")
             return
 
-        if self.current_track_index <= 0:
+        if self.current_track_index.value <= 0:
             if self.verbose_mode.value: print("[!] Beginning of playlist. Playing the last track.")
-            self.current_track_index = len(self.current_playlist) - 1
+            self.current_track_index.value = len(self.current_playlist) - 1
         else:
-            self.current_track_index -= 1
-        if self.verbose_mode.value: print(f"[+] Playing previous track: {self.current_playlist[str(self.current_track_index)]['track_name']}")
+            self.current_track_index.value -= 1
+        if self.verbose_mode.value: print(f"[+] Playing previous track: {self.current_playlist[str(self.current_track_index.value)]['track_name']}")
         self.play_configured_playlist_tracks()
         return
     
@@ -212,7 +217,7 @@ class Mp3Player:
             return
 
         self.current_playlist = playlist
-        self.current_track_index = 0
+        self.current_track_index.value = 0
         self.play_configured_playlist_tracks()
         if self.verbose_mode.value: print("[+] Playing the given playlist.")
         return
@@ -228,7 +233,7 @@ class Mp3Player:
             return
 
         self.current_playlist = playlist
-        self.current_track_index = 0
+        self.current_track_index.value = 0
         if self.verbose_mode.value: print("[+] Playlist set.")
         return
 
@@ -245,7 +250,7 @@ class Mp3Player:
             if self.verbose_mode.value: print("[!] Index out of range.")
             return
 
-        self.current_track_index = int(index)
+        self.current_track_index.value = int(index)
         self.play_configured_playlist_tracks()
         return
     
