@@ -278,8 +278,17 @@ class Sp_downloader:
             if os.path.exists(self.dir_path+os.sep+'playlists'+os.sep+playlist_name):
                 playlist_name = self.dir_path+os.sep+'playlists'+os.sep+playlist_name
             else:
-                print("[!] Playlist not found.")
-                return None
+                if (playlist_name.isdecimal()):
+                    playlists = self.get_list_of_playlists()
+                    if (int(playlist_name) <= len(playlists)) and (int(playlist_name) > 0):
+                        playlist_name = playlists[int(playlist_name)-1]
+                        playlist_name = self.dir_path+os.sep+'playlists'+os.sep+playlist_name
+                    else:
+                        print("[!] index out of range!")
+                        return None
+                else:
+                    print("[!] Playlist not found.")
+                    return None
         if self.verbose_mode: print("[+] Loading playlist from json file")
         with open(playlist_name, 'r') as f:
             my_playlist = json.load(f)

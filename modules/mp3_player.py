@@ -23,7 +23,7 @@ class Mp3Player:
     def __init__(self, verbose_mode=True):
         self.current_playlist = None
         self.current_track_index = multiprocessing.Value('i', 0)
-        self.current_track_name = multiprocessing.Value(ctypes.c_wchar_p, "")
+        self.current_track_name = multiprocessing.Value(ctypes.c_wchar_p, "track_name")
         self.current_track_path = multiprocessing.Value(ctypes.c_wchar_p, "")
         self.current_status_player = multiprocessing.Value('b', False)
         self.current_status_playlist = multiprocessing.Value('b', False)
@@ -302,6 +302,9 @@ class Mp3Player:
         else:
             if self.verbose_mode.value: print("[!] Invalid play mode.")
         return
+    
+    def get_current_track_name(self):
+        return self.current_track_name.value
 
 ################################### TEST ####################################
 import threading

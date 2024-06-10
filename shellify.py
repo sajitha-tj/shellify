@@ -2,6 +2,7 @@ import os
 import sys
 from dotenv import load_dotenv
 import argparse
+import random
 import json
 import time
 from modules.sp_downloader import Sp_downloader
@@ -61,13 +62,23 @@ def list_all_playlists(spd: Sp_downloader):
             for idx in temp_playlist:
                 print(f"     ├─[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}")
 
-def cli_display(mp3Player: Mp3Player):
+def cli_display(mp3Player: Mp3Player, animater: Mini_cli_animator, playlist):
     # animation thread
-    anim = Mini_cli_animator()
-    anim.animate_on_own(0.3)
-    while mp3Player.is_playing:
-        time.sleep(1.2)
-    anim.stop()
+    time.sleep(1)
+    bar_heights = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
+    # animater.animate_on_own()
+    while True:
+        # bars = [random.choice(bar_heights) for _ in range(30)]
+        # final_string = ''.join(bars)
+        index = mp3Player.current_track_index.value
+        track_name = playlist[str(index)]['track_name'].split('(')[0]
+        print("[▸] ", track_name) # name
+        # print(final_string) # shapes
+        animater.animate()
+        # print(":", end='') # input line
+        time.sleep(0.3)
+        print(f"\033[A{' '*0}\033[A{' '*0}", end='\r')
+
 
 if __name__ == "__main__":
     banner = """
@@ -75,7 +86,7 @@ if __name__ == "__main__":
 /\  ___\/\ \_\ \/\  ___\/\ \    /\ \    /\ \/\  ___/\ \_\ \   
 \ \___  \ \  __ \ \  __\  \ \___\ \ \___\ \ \ \  __\ \____ \  
  \/\_____\ \_\ \_\ \_____\ \_____\ \_____\ \_\ \_\  \/\_____\ 
-  \/_____/\/_/\/_/\/_____/\/_____/\/_____/\/_/\/_/   \/_____/ ~v0.8
+  \/_____/\/_/\/_/\/_____/\/_____/\/_____/\/_/\/_/   \/_____/ ~v1.0
 """
     print(banner)
 
@@ -129,7 +140,10 @@ if __name__ == "__main__":
     elif playlist_name:
         my_playlist = spd.load_playlist_from_json(playlist_name)
 
-
+    
+    if (my_playlist == None) or (len(my_playlist) <= 0):
+        print("[!] Error in playlist")
+        sys.exit(1)
     # print("[+] Downloading first track") #########
     # download first track of playlist
     # spd.get_id_and_download_single_song(my_playlist["0"]) #########
@@ -140,10 +154,12 @@ if __name__ == "__main__":
     if not is_no_play:
         print("[+] Starting mp3 player")
         mp3Player = Mp3Player(verbose_mode=False)
+        animater = Mini_cli_animator()
         mp3Player.play_playlist(my_playlist)
         mp3Player.set_play_mode(play_mode)
+
         # animation thread
-        threading.Thread(target=cli_display, args=(mp3Player,), daemon=True).start()
+        threading.Thread(target=cli_display, args=(mp3Player,animater, my_playlist,), daemon=True).start()        
 
         print("\n[!] CLI Commands\n n : play next track\n p : play previous track\n q : quit\n")
         while True:
@@ -152,7 +168,11 @@ if __name__ == "__main__":
                 mp3Player.stop()
                 print("[+] Bye!")
                 break
-            if cmd == "n":
+            elif cmd == "n":
+                print(f"\033[A \033[A\033[A{' '*35}\n")
                 mp3Player.play_next()
-            if cmd == "p":
+            elif cmd == "p":
+                print(f"\033[A \033[A\033[A{' '*35}\n")
                 mp3Player.play_previous()
+            else:
+                print(f"\033[A \033[A\033[A{' '*35}\n")
