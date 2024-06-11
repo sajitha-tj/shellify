@@ -249,11 +249,45 @@ class Sp_downloader:
 
         if name == "":
             name = "playlist"
+
+        name = name.replace(" ", "_").replace("-", "_")
+        name = re.sub(r"[^a-zA-Z0-9_]", "", name)
+
         file_to_save = f"{dir_path_playlist}/{name}.json"
         # overwrite the file if it already exists
         with open(file_to_save, 'w') as f:
             json.dump(playlist, f)
         if self.verbose_mode: print(f"[+] Playlist saved to {file_to_save} successfully.")
+        return
+    
+    def rename_playlist(self, old_name: str, new_name: str):
+        '''
+        Rename the playlist
+        arguments: old_name: str, new_name: str
+        returns  : None
+        '''
+        new_name = new_name.replace(" ", "_").replace("-", "_")
+        new_name = re.sub(r"[^a-zA-Z0-9_]", "", new_name)
+        if not old_name.endswith('.json') and not old_name.isdecimal():
+            old_name = old_name + '.json'
+        if not os.path.exists(old_name):
+            if os.path.exists(self.dir_path+os.sep+'playlists'+os.sep+old_name):
+                old_name = self.dir_path+os.sep+'playlists'+os.sep+old_name
+            else:
+                if (old_name.isdecimal()):
+                    playlists = self.get_list_of_playlists()
+                    if (int(old_name) <= len(playlists)) and (int(old_name) > 0):
+                        old_name = playlists[int(old_name)-1]
+                        old_name = self.dir_path+os.sep+'playlists'+os.sep+old_name
+                    else:
+                        print("[!] index out of range!")
+                        return None
+                else:
+                    print("[!] Playlist not found.")
+                    return None
+        new_name = self.dir_path + os.sep + 'playlists' + os.sep + new_name + '.json'
+        os.rename(f"{old_name}", f"{new_name}")
+        if self.verbose_mode: print(f"[+] Playlist renamed to {new_name} successfully.")
         return
     
     def get_list_of_playlists(self):
@@ -274,6 +308,8 @@ class Sp_downloader:
         arguments: name: str
         returns  : playlist: dict
         '''
+        if not playlist_name.endswith('.json') and not playlist_name.isdecimal():
+            playlist_name = playlist_name + '.json'
         if not os.path.exists(playlist_name):
             if os.path.exists(self.dir_path+os.sep+'playlists'+os.sep+playlist_name):
                 playlist_name = self.dir_path+os.sep+'playlists'+os.sep+playlist_name

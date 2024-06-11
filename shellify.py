@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from dotenv import load_dotenv
 import argparse
@@ -106,6 +107,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--threads', type=int, help="No of threads to download songs", default=3)
     parser.add_argument('--no-play', action='store_true', help="Do not play the playlist")
     parser.add_argument('-m', '--mode', type=str, help="Play mode: loop, shuffle, repeat", default="loop", choices=["loop", "shuffle", "repeat"])
+    parser.add_argument('-o', '--output', type=str, help="Output file name for the playlist. Can also be used to rename the playlist.")
     args = parser.parse_args()
 
     # arguments
@@ -116,6 +118,7 @@ if __name__ == "__main__":
     list_all_playlists_bool = args.list_all
     is_no_play = args.no_play
     play_mode = args.mode
+    output_name = args.output
 
     # make shellify directory
     dir_path = os.path.expanduser('~')+os.sep+'shellify'
@@ -135,10 +138,18 @@ if __name__ == "__main__":
     if playlist_url:
         my_playlist = get_playlist_from_url(playlist_url, spd)
         # save the playlist to a json file
-        playlist_id = playlist_url.split('/')[-1].split('?')[0]
-        spd.save_playlist_to_json(my_playlist, "playlist_"+playlist_id)
+        if output_name:
+            spd.save_playlist_to_json(my_playlist, output_name)
+            print(f"Playlist saved as '{output_name}'")
+        else:
+            playlist_id = playlist_url.split('/')[-1].split('?')[0]
+            spd.save_playlist_to_json(my_playlist, "playlist_"+playlist_id)
+            print(f"[+] Playlist saved as 'playlist_{playlist_id}'")
     elif playlist_name:
         my_playlist = spd.load_playlist_from_json(playlist_name)
+        if output_name:
+            spd.rename_playlist(playlist_name, output_name)
+            print(f"[+] Playlist renamed to {output_name}")
 
     
     if (my_playlist == None) or (len(my_playlist) <= 0):
@@ -157,6 +168,7 @@ if __name__ == "__main__":
         animater = Mini_cli_animator()
         mp3Player.play_playlist(my_playlist)
         mp3Player.set_play_mode(play_mode)
+        print("[+] Play mode:", play_mode)
 
         # animation thread
         threading.Thread(target=cli_display, args=(mp3Player,animater, my_playlist,), daemon=True).start()        
