@@ -155,12 +155,14 @@ if __name__ == "__main__":
     if (my_playlist == None) or (len(my_playlist) <= 0):
         print("[!] Error in playlist")
         sys.exit(1)
-    # print("[+] Downloading first track") #########
+          
     # download first track of playlist
-    # spd.get_id_and_download_single_song(my_playlist["0"]) #########
+    if (spd.check_if_song_exists(my_playlist["0"]) == False):
+        print("[+] Downloading first track")
+        spd.get_id_and_download_single_song(my_playlist["0"])
 
     # get id & download the songs, one at once, in background
-    # threading.Thread(target=seperate_downloader, args=(my_playlist,no_of_threads)).start() #########
+    threading.Thread(target=seperate_downloader, args=(my_playlist,no_of_threads)).start() #########
 
     if not is_no_play:
         print("[+] Starting mp3 player")
