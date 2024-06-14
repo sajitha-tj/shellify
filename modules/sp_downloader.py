@@ -27,6 +27,17 @@ class Sp_downloader:
         self.auth_manager = SpotifyClientCredentials(client_id=self.client_id, client_secret=self.client_secret)
         self.sp = spotipy.Spotify(auth_manager=self.auth_manager)
 
+    def check_for_internet(self):
+        try:
+            res = requests.get("https://www.google.com")
+            if res.status_code == 200:
+                return True
+            else:
+                return False
+        except:
+            if self.verbose_mode: print("[!] No internet. Please check your internet connection")
+            return False
+        
     def add_paths_to_playlist_dict(self, my_playlist: dict):
         '''
         Add the file paths to the playlist dictionary

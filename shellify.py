@@ -1,10 +1,7 @@
 import os
-import re
 import sys
 from dotenv import load_dotenv
 import argparse
-import random
-import json
 import time
 from modules.sp_downloader import Sp_downloader
 from modules.mp3_player import Mp3Player
@@ -29,7 +26,7 @@ def get_playlist_from_url(playlist_url:str, spd: Sp_downloader):
     return my_playlist
 
 def seperate_downloader(playlist:dict, no_of_threads:int=3):
-    print("[+] Downloading songs in background")
+    print(f"[+] Downloading {len(playlist)} songs in background")
     print("[+] No of threads downloading:",no_of_threads)
     threads = []
     for idx in playlist:
@@ -61,23 +58,26 @@ def list_all_playlists(spd: Sp_downloader):
         temp_playlist = spd.load_playlist_from_json(playlist_name)
         if len(temp_playlist) != 0:
             for idx in temp_playlist:
-                print(f"     ├─[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}")
+                if idx != str(len(temp_playlist)-1):
+                    print(f"     ├──[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}")
+                else:
+                    print(f"     └──[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}\n")
 
 def cli_display(mp3Player: Mp3Player, animater: Mini_cli_animator, playlist):
     # animation thread
     time.sleep(1)
-    bar_heights = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█']
-    # animater.animate_on_own()
+    last_index = 0
+    i = 0 # index for displaying text
     while True:
-        # bars = [random.choice(bar_heights) for _ in range(30)]
-        # final_string = ''.join(bars)
         index = mp3Player.current_track_index.value
-        track_name = playlist[str(index)]['track_name'].split('(')[0]
-        print("[▸] ", track_name) # name
-        # print(final_string) # shapes
+        track_name = playlist[str(index)]['track_name']
+        if index != last_index: # track changed
+            i = 0
+        # print("[▸] ", track_name) # name
+        i = animater.animate_long_text(text=track_name, display_length=30, current_index=i, fixed_prefix='[▸] ')
         animater.animate()
-        # print(":", end='') # input line
         time.sleep(0.3)
+        last_index = index
         print(f"\033[A{' '*0}\033[A{' '*0}", end='\r')
 
 
@@ -102,8 +102,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=usage_msg)
     parser.add_argument('-u', '--url', type=str, help="Spotify playlist or album URL")
     parser.add_argument('-p', '--playlist', type=str, help="downloaded playlist name")
-    parser.add_argument('--list', action='store_true', help="List all the downloaded playlist names")
-    parser.add_argument('--list-all', action='store_true', help="List downloaded playlists with songs")
+    parser.add_argument('-l', '--list', action='store_true', help="List all the downloaded playlist names")
+    parser.add_argument('-la', '--list-all', action='store_true', help="List downloaded playlists with songs")
     parser.add_argument('-t', '--threads', type=int, help="No of threads to download songs", default=3)
     parser.add_argument('--no-play', action='store_true', help="Do not play the playlist")
     parser.add_argument('-m', '--mode', type=str, help="Play mode: loop, shuffle, repeat", default="loop", choices=["loop", "shuffle", "repeat"])
@@ -129,13 +129,18 @@ if __name__ == "__main__":
     spd = Sp_downloader(client_id, client_secret, user_id, dir_path, verbose_mode=False)
 
     # argument handling
+    # offline...
     if list_playlists_bool:
         list_playlist_names(spd)
         sys.exit(0)
     elif list_all_playlists_bool:
         list_all_playlists(spd)
         sys.exit(0)
+    # online...
     if playlist_url:
+        if not spd.check_for_internet():
+            print("[!] No internet. Please check your internet connection")
+            sys.exit(1)
         my_playlist = get_playlist_from_url(playlist_url, spd)
         # save the playlist to a json file
         if output_name:
@@ -155,14 +160,17 @@ if __name__ == "__main__":
     if (my_playlist == None) or (len(my_playlist) <= 0):
         print("[!] Error in playlist")
         sys.exit(1)
-          
-    # download first track of playlist
-    if (spd.check_if_song_exists(my_playlist["0"]) == False):
-        print("[+] Downloading first track")
-        spd.get_id_and_download_single_song(my_playlist["0"])
+        
+    if not spd.check_for_internet():
+        print("[!] No internet. Please check your internet connection")
+    else:
+        # download first track of playlist
+        if (spd.check_if_song_exists(my_playlist["0"]) == False):
+            print("[+] Downloading first track")
+            spd.get_id_and_download_single_song(my_playlist["0"])
 
-    # get id & download the songs, one at once, in background
-    threading.Thread(target=seperate_downloader, args=(my_playlist,no_of_threads)).start() #########
+        # get id & download the songs, one at once, in background
+        threading.Thread(target=seperate_downloader, args=(my_playlist,no_of_threads,)).start() #########
 
     if not is_no_play:
         print("[+] Starting mp3 player")

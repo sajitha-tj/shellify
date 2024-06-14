@@ -1,6 +1,7 @@
 # Shellify
 
 Shellify is a terminal-based application that allows you to download and play Spotify playlists and albums directly from your terminal. It uses various Python modules to fetch songs from Spotify, download their audio from YouTube, and play them using a built-in MP3 player. Shellify lets you enjoy spotify, without the need of the spotify app and helps you have peace of mind while listening to your favorite songs without annoying ad breaks.
+You need a spotify developer account to use this application. You can create one [here](https://developer.spotify.com).
 
 ## Features
 
