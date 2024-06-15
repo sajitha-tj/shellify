@@ -54,14 +54,14 @@ def list_all_playlists(spd: Sp_downloader):
     print("[+] All the downloaded playlists with songs:")
     list_of_playlists = spd.get_list_of_playlists()
     for idx, playlist_name in enumerate(list_of_playlists):
-        print(f"    [{idx+1}] {playlist_name}")
+        print(f"\033[1m    [{idx+1}] {playlist_name.split('.json')[0]}\033[0m")
         temp_playlist = spd.load_playlist_from_json(playlist_name)
         if len(temp_playlist) != 0:
             for idx in temp_playlist:
                 if idx != str(len(temp_playlist)-1):
-                    print(f"     ├──[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}")
+                    print(f"     ├─[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}")
                 else:
-                    print(f"     └──[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}\n")
+                    print(f"     └─[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}\n")
 
 
 def get_non_existing_songs(playlist):
@@ -88,7 +88,7 @@ def cli_display(mp3Player: Mp3Player, animater: Mini_cli_animator, playlist):
         if index != last_index: # track changed
             i = 0
         # print("[▸] ", track_name) # name
-        i = animater.animate_long_text(text=track_name, display_length=30, current_index=i, fixed_prefix='[▸] ')
+        i = animater.animate_long_text(text=track_name, display_length=30, current_index=i, fixed_prefix='\033[1m[▸] ', fixed_suffix='\033[0m')
         animater.animate()
         time.sleep(0.3)
         last_index = index
@@ -110,6 +110,10 @@ if __name__ == "__main__":
     client_id = os.getenv('CLIENT_ID')
     client_secret = os.getenv('CLIENT_SECRET')
     user_id = os.getenv('USER_ID')
+
+    if not client_id or not client_secret or not user_id:
+        print("[!] Shellify needs spotify developer credentials on a '.env' to work. You can create a spotify developer account at https://developer.spotify.com \n[!]Check the README for more info.")
+        sys.exit(1)
 
     # argument parser
     usage_msg = "Shellify is a terminal-based application that allows you to download and play Spotify playlists and albums directly from your terminal. Shellify lets you enjoy spotify, without the need of the spotify app and helps you have peace of mind while listening to your favorite songs without annoying ad breaks."
@@ -138,14 +142,23 @@ if __name__ == "__main__":
     dir_path = os.path.expanduser('~')+os.sep+'shellify'
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-    print("[+] dir_path:",dir_path)
+    print("[+] shellify downloads folder:",dir_path)
 
     spd = Sp_downloader(client_id, client_secret, user_id, dir_path, verbose_mode=False)
 
     # argument handling
     # offline...
     if list_playlists_bool:
-        list_playlist_names(spd)
+        if playlist_name:
+            my_playlist = spd.load_playlist_from_json(playlist_name)
+            print(f"[+] Playlist: {playlist_name}")
+            for idx in my_playlist:
+                if idx != str(len(my_playlist)-1):
+                    print(f" ├──[{(int(idx)+1)}] {my_playlist[idx]['track_name']}")
+                else:
+                    print(f" └──[{(int(idx)+1)}] {my_playlist[idx]['track_name']}\n")
+        else:
+            list_playlist_names(spd)
         sys.exit(0)
     elif list_all_playlists_bool:
         list_all_playlists(spd)
@@ -178,11 +191,13 @@ if __name__ == "__main__":
 
     # downloading only songs that do not exists
     songs_that_exists, songs_do_not_exists = get_non_existing_songs(my_playlist)
+    print(f"[+] Playlist: {len(my_playlist)} songs")
 
     if len(songs_that_exists) == len(my_playlist): # all songs exists: no downloading, just play
         pass
     elif len(songs_do_not_exists) == len(my_playlist): # no songs exists: download all
         # check internet.. if no internet: exit. else: download
+        print(f"[+] Songs to download: {len(songs_do_not_exists)}")
         print("[!] No existing tracks. Downloading all...")
         if not spd.check_for_internet():
             print("[!] No internet. Please check your internet connection and Try again")
@@ -202,6 +217,7 @@ if __name__ == "__main__":
             print("[!] Playing already downloaded songs")
             my_playlist = songs_that_exists
         else:
+            print(f"[+] Songs to download: {len(songs_do_not_exists)}")
             # get id & download the songs, one at once, in background
             threading.Thread(target=seperate_downloader, args=(songs_do_not_exists,no_of_threads,)).start() 
 
