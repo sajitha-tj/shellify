@@ -40,6 +40,9 @@ class Mini_cli_animator:
         print ("\033[A                                                                           \033[A")
 
     def animate_long_text(self, text: str, current_index:int, display_length: int = 20, fixed_prefix: str = "", fixed_suffix:str = ""):
+        if len(text) < display_length:
+            print(fixed_prefix + text + fixed_suffix)
+            return current_index+1
         seperating_white_spaces_length = int(display_length / 2)
         # current index is returned to 0 if it exceeds length of text + half of display length(which is the length of white space seperator)
         if (current_index >= (len(text) + seperating_white_spaces_length)):

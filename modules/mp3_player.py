@@ -179,11 +179,10 @@ class Mp3Player:
             if self.verbose_mode.value: print("[!] No playlist provided.")
             return
 
+        self.current_track_index.value += 1
         if self.current_track_index.value >= len(self.current_playlist):
             if self.verbose_mode.value: print("[!] End of playlist. Restarting from the beginning.")
             self.current_track_index.value = 0
-        else:
-            self.current_track_index.value += 1
         if self.verbose_mode.value: print(f"[+] Playing next track: {self.current_playlist[str(self.current_track_index.value)]['track_name']}")
         self.play_configured_playlist_tracks()
     

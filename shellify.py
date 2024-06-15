@@ -63,6 +63,20 @@ def list_all_playlists(spd: Sp_downloader):
                 else:
                     print(f"     └──[{(int(idx)+1)}] {temp_playlist[idx]['track_name']}\n")
 
+
+def get_non_existing_songs(playlist):
+    songs_that_exists = {}
+    songs_do_not_exists = {}
+    existing_songs_index = 0
+    for idx in playlist:
+        path = playlist[idx]['file_path']
+        if os.path.exists(path):
+            songs_that_exists[str(existing_songs_index)] = playlist[idx]
+            existing_songs_index += 1
+        else:
+            songs_do_not_exists[idx] = playlist[idx]
+    return (songs_that_exists, songs_do_not_exists)
+
 def cli_display(mp3Player: Mp3Player, animater: Mini_cli_animator, playlist):
     # animation thread
     time.sleep(1)
@@ -160,17 +174,36 @@ if __name__ == "__main__":
     if (my_playlist == None) or (len(my_playlist) <= 0):
         print("[!] Error in playlist")
         sys.exit(1)
-        
-    if not spd.check_for_internet():
-        print("[!] No internet. Please check your internet connection")
-    else:
-        # download first track of playlist
-        if (spd.check_if_song_exists(my_playlist["0"]) == False):
-            print("[+] Downloading first track")
-            spd.get_id_and_download_single_song(my_playlist["0"])
 
-        # get id & download the songs, one at once, in background
-        threading.Thread(target=seperate_downloader, args=(my_playlist,no_of_threads,)).start() #########
+
+    # downloading only songs that do not exists
+    songs_that_exists, songs_do_not_exists = get_non_existing_songs(my_playlist)
+
+    if len(songs_that_exists) == len(my_playlist): # all songs exists: no downloading, just play
+        pass
+    elif len(songs_do_not_exists) == len(my_playlist): # no songs exists: download all
+        # check internet.. if no internet: exit. else: download
+        print("[!] No existing tracks. Downloading all...")
+        if not spd.check_for_internet():
+            print("[!] No internet. Please check your internet connection and Try again")
+            sys.exit(1)
+        else:
+            # download first track of playlist
+            if (spd.check_if_song_exists(my_playlist["0"]) == False):
+                print("[+] Downloading first track")
+                spd.get_id_and_download_single_song(my_playlist["0"])
+
+            # get id & download the songs, one at once, in background
+            threading.Thread(target=seperate_downloader, args=(songs_do_not_exists,no_of_threads,)).start() 
+    else: #else: download remaining, play all
+        # check internet.. if no internet: play existing songs. else: download remaining & play all
+        if not spd.check_for_internet():
+            print("[!] No internet. Please check your internet connection")
+            print("[!] Playing already downloaded songs")
+            my_playlist = songs_that_exists
+        else:
+            # get id & download the songs, one at once, in background
+            threading.Thread(target=seperate_downloader, args=(songs_do_not_exists,no_of_threads,)).start() 
 
     if not is_no_play:
         print("[+] Starting mp3 player")
