@@ -1,15 +1,25 @@
 # Shellify
 
+```
+ ______  __  __  ______  __      __      __  ______ __  __
+/\  ___\/\ \_\ \/\  ___\/\ \    /\ \    /\ \/\  ___/\ \_\ \
+\ \___  \ \  __ \ \  __\  \ \___\ \ \___\ \ \ \  __\ \____ \
+ \/\_____\ \_\ \_\ \_____\ \_____\ \_____\ \_\ \_\  \/\_____\
+  \/_____/\/_/\/_/\/_____/\/_____/\/_____/\/_/\/_/   \/_____/ ~v0.1.0
+```
+
 Shellify is a terminal-based application that allows you to download and play Spotify playlists and albums directly from your terminal. It uses various Python modules to fetch songs from Spotify, download their audio from YouTube, and play them using a built-in MP3 player. Shellify lets you enjoy spotify, without the need of the spotify app and helps you have peace of mind while listening to your favorite songs without annoying ad breaks.
-You need a spotify developer account to use this application. You can create one [here](https://developer.spotify.com).
+You need a spotify developer account to use this application.
 
 ## Features
 
 - Download songs from Spotify playlists and albums
 - Play downloaded songs directly from the terminal
-- Save playlists as JSON files
+- Save playlists for offline use
 - Metadata handling for downloaded MP3 files
 - Basic MP3 player functionality (play, next, previous, different play modes)
+- Simple CLI animations for better user experience
+- Cross-platform support (Windows, MacOS, Linux)
 
 ## Requirements
 
@@ -20,8 +30,12 @@ You need a spotify developer account to use this application. You can create one
 - Requests
 - FFMPEG
 - dotenv
-- argparse
 - pygame
+
+## Prerequisites
+
+- Spotify Developer Account (for API credentials). You can create one [here](https://developer.spotify.com).
+- FFMPEG installed on your system (look below for installation instructions)
 
 ## Installation
 
@@ -76,6 +90,50 @@ You need a spotify developer account to use this application. You can create one
    - `p`: Play the previous track
    - `q`: Quit the player
 
+## Example
+
+- Download songs from a Spotify playlist/album and play them:
+
+  ```bash
+  python shellify.py -u <spotify_url>
+  ```
+
+- List saved playlists:
+
+  ```bash
+  python shellify.py --list
+  ```
+
+- Play all playlists with songs:
+
+  ```bash
+  python shellify.py --list-all
+  ```
+
+- List all songs in a playlist (You can use the playlist number from the list command as the playlist name as well):
+
+  ```bash
+  python shellify.py --list -p <playlist_name>
+  ```
+
+- Play a specific playlist (You can use the playlist number from the list command as the playlist name as well):
+
+  ```bash
+  python shellify.py -p <playlist_name>
+  ```
+
+- Download songs from a playlist and save it with a custom name:
+
+  ```bash
+  python shellify.py -u <spotify_url> -o <playlist_name>
+  ```
+
+- For more information:
+
+  ```bash
+  python shellify.py -h
+  ```
+
 ## Project Structure
 
 ```plaintext
@@ -83,10 +141,12 @@ shellify/
 ├── modules/
 │   ├── sp_downloader.py
 │   ├── mp3_player.py
-│   └── mini_cli_animator.py
+│   ├── mini_cli_animator.py
+│   └── test_requirements.py
 ├── shellify.py
 ├── requirements.txt
-├── .env.example
+├── .env
+├── LICENSE
 └── README.md
 ```
 
@@ -111,7 +171,11 @@ This module handles the MP3 player functionality:
 
 #### `mini_cli_animator.py`
 
-This module can be used to add CLI animations and improve user experience. This still work in progress. mp3_player.py uses this module to display a simple animation while playing songs.
+This module can be used to add CLI animations and improve user experience. This is still a work in progress. mp3_player.py uses this module to display simple animations while playing songs.
+
+#### `test_requirements.py`
+
+This module is used to check if all the required packages are installed. It is used in the main script to check if the required packages are installed before running the program.
 
 ## Contributing
 

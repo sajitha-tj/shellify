@@ -3,5 +3,4 @@ eyed3
 pytube
 requests
 python-dotenv
-argparse
 pygame

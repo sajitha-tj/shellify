@@ -3,11 +3,11 @@ import sys
 from dotenv import load_dotenv
 import argparse
 import time
+import threading
 from modules.sp_downloader import Sp_downloader
 from modules.mp3_player import Mp3Player
 from modules.mini_cli_animator import Mini_cli_animator
-import threading
-
+from modules.test_requirements import TestRequirements
 
 def get_playlist_from_url(playlist_url:str, spd: Sp_downloader):
     # download the playlist from spotify
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 /\  ___\/\ \_\ \/\  ___\/\ \    /\ \    /\ \/\  ___/\ \_\ \   
 \ \___  \ \  __ \ \  __\  \ \___\ \ \___\ \ \ \  __\ \____ \  
  \/\_____\ \_\ \_\ \_____\ \_____\ \_____\ \_\ \_\  \/\_____\ 
-  \/_____/\/_/\/_/\/_____/\/_____/\/_____/\/_/\/_/   \/_____/ ~v1.0
+  \/_____/\/_/\/_/\/_____/\/_____/\/_____/\/_/\/_/   \/_____/ ~v0.1.0
 """
     print(banner)
 
@@ -111,8 +111,21 @@ if __name__ == "__main__":
     client_secret = os.getenv('CLIENT_SECRET')
     user_id = os.getenv('USER_ID')
 
+    # check if spotify credentials are present in .env
     if not client_id or not client_secret or not user_id:
         print("[!] Shellify needs spotify developer credentials on a '.env' to work. You can create a spotify developer account at https://developer.spotify.com \n[!]Check the README for more info.")
+        sys.exit(1)
+
+    # test if all requirements are satisfied
+    requirements_result, requirements_message = TestRequirements().test_requirements()
+    if requirements_result == False:
+        print(f"[!] Requirements not satisfied. {requirements_message} \n[!] Please install the requirements using 'pip install -r requirements.txt'")
+        sys.exit(1)
+
+    # test if ffmpeg is installed
+    ffmpeg_result, ffmpeg_message = TestRequirements().test_ffmpeg()
+    if ffmpeg_result == False:
+        print(f"[!] ffmpeg is not installed. \n[!] Please install ffmpeg from https://ffmpeg.org/download.html \n[!]Check the README for more info.")
         sys.exit(1)
 
     # argument parser
